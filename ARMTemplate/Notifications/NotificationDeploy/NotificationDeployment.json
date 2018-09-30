@@ -1,0 +1,135 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "appName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of web app resource"
+      }
+    },
+    "skuName": {
+      "type": "string",
+      "defaultValue": "F1",
+      "allowedValues": [
+        "F1",
+        "D1",
+        "B1",
+        "B2",
+        "B3",
+        "S1",
+        "S2",
+        "S3",
+        "P1",
+        "P2",
+        "P3",
+        "P4"
+      ],
+      "metadata": {
+        "description": "Describes plan's pricing tier and capacity."
+      }
+    },
+    "serviceOwnerTag": {
+      "type": "string",
+      "metadata": {
+        "description": "Value of serviceOwner tag"
+      }
+    },
+    "environmentType": {
+      "type": "string",
+      "allowedValues": [
+        "dev",
+        "test",
+        "prod"
+      ],
+      "metadata": {
+        "description": "Environment type"
+      }
+    },
+    "warsawApiKey": {
+      "type": "string",
+      "metadata": {
+        "description": "Api key to 19115 warsaw API"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring"
+    }
+  },
+  "variables": {
+
+  },
+  "resources": [
+    {
+      "name": "[concat(parameters('appName'),'-',parameters('environmentType'),'-appserviceplan')]",
+      "type": "Microsoft.Web/serverfarms",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-08-01",
+      "sku": {
+        "name": "[parameters('skuName')]"
+      },
+      "dependsOn": [],
+      "tags": {
+        "displayName": "[concat(parameters('appName'),'-',parameters('environmentType'),'-appserviceplan')]"
+      },
+      "properties": {
+        "name": "[concat(parameters('appName'),'-',parameters('environmentType'),'-appserviceplan')]",
+        "numberOfWorkers": 1
+      }
+    },
+    {
+      "name": "[concat(parameters('appName'),'-',parameters('environmentType'),'-webapp')]",
+      "type": "Microsoft.Web/sites",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-08-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', concat(parameters('appName'),'-',parameters('environmentType'),'-appserviceplan'))]"
+      ],
+      "tags": {
+        "[concat('hidden-related:', resourceId('Microsoft.Web/serverfarms', concat(parameters('appName'),'-',parameters('environmentType'),'-appserviceplan')))]": "Resource",
+        "ServiceOwner": "[parameters('serviceOwnerTag')]"
+      },
+      "properties": {
+        "name": "[concat(parameters('appName'),'-',parameters('environmentType'),'-webapp')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', concat(parameters('appName'),'-',parameters('environmentType'),'-appserviceplan'))]",
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "WarsawApiKey",
+              "value": "[parameters('warsawApiKey')]"
+            },
+            {
+              "name": "ENVIRONMENT_TYPE",
+              "value": "[parameters('environmentType')]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "name": "MSDeploy",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2015-08-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', concat(parameters('appName'),'-',parameters('environmentType'),'-webapp'))]"
+          ],
+          "tags": {
+            "displayName": "Webappdeploy"
+          },
+          "properties": {
+            "packageUri": "[concat(parameters('_artifactsLocation'), '/Notifications/package.zip', parameters('_artifactsLocationSasToken'))]",
+            "dbType": "None",
+            "connectionString": "",
+            "setParameters": {
+              "IIS Web Application Name": "[concat(parameters('appName'),'-',parameters('environmentType'),'-webapp')]"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

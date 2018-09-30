@@ -1,0 +1,29 @@
+﻿@model IEnumerable<Notification>
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<h2>Wilanów</h2>
+<table class="table table-bordered table-responsive table-hover">
+    <tr>
+        <th>Zdarzenie</th>
+        <th>Data utworzenia</th>
+        <th>Numer powiadomienia </th>
+        <th>Ulica</th>
+        <th>Kategoria główna</th>
+        <th>Kategoria pomocnicza</th>
+        <th>Źródło</th>
+    </tr>
+    @foreach (var d in Model)
+    {
+    <tr>
+        <td>@d.Event</td>
+        <td>@d.CreateDate</td>
+        <td>@d.NotificationNumber</td>
+        <td>@d.Street</td>
+        <td>@d.Category</td>
+        <td>@d.Subcategory</td>
+        <td>@d.Source</td>
+    </tr>
+    }
+</table>  
